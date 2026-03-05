@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gray-50 text-dark-900 antialiased;
+  }
+  
+  * {
+    @apply border-gray-300;
+  }
+}
+
+@layer components {
+  /* Scrollbar personalizado - estilo industrial */
+  ::-webkit-scrollbar {
+    @apply w-2;
+  }
+  
+  ::-webkit-scrollbar-track {
+    @apply bg-gray-100;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-dark-400 rounded-full hover:bg-dark-500;
+  }
+  
+  /* Gradient overlay para imágenes */
+  .img-overlay {
+    @apply absolute inset-0 bg-gradient-to-t from-dark-950/60 to-transparent;
+  }
+  
+  /* Efectos de hover metálico */
+  .metal-hover {
+    @apply transition-all duration-300 hover:shadow-metal-lg hover:-translate-y-1;
+  }
+  
+  /* Bordes metálicos */
+  .metal-border {
+    @apply border border-dark-300 shadow-metal;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
