@@ -15,6 +15,10 @@ const Layout = () => {
       {/* Toast notifications */}
       <Toaster
         position="top-right"
+        containerStyle={{
+          top: 88,
+          right: 16,
+        }}
         toastOptions={{
           duration: 3000,
           style: {
