@@ -1,14 +1,79 @@
-import { Link, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
-import { Menu, X, Car, LogOut, User, Settings, Plus, Home, Search } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useCallback, useEffect, useState } from 'react';
+import { Menu, X, Car, LogOut, User, Settings, Plus, Home, Bell } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '../common/Button';
+import { questionService } from '../../api/questionService';
+import { vehicleService } from '../../api/vehicleService';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [notificationsCount, setNotificationsCount] = useState(0);
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const getEntityId = (entity) => {
+    if (!entity) return null;
+    if (typeof entity === 'string') return entity;
+    return entity._id || entity.id || null;
+  };
+
+  const loadNotifications = useCallback(async () => {
+    if (!isAuthenticated()) {
+      setNotificationsCount(0);
+      return;
+    }
+
+    try {
+      const [myQuestionsResponse, myVehiclesResponse] = await Promise.all([
+        questionService.getMyQuestions().catch(() => ({ data: [] })),
+        vehicleService.getMyVehicles().catch(() => ({ data: [] })),
+      ]);
+
+      const myQuestions = Array.isArray(myQuestionsResponse?.data)
+        ? myQuestionsResponse.data
+        : [];
+      const myVehicles = Array.isArray(myVehiclesResponse?.data)
+        ? myVehiclesResponse.data
+        : [];
+
+      // Mensajes no respondidos para el usuario que pregunta.
+      const pendingForBuyerCount = myQuestions.filter((question) => !question?.answer).length;
+
+      const myUserId = getEntityId(user);
+
+      const ownedVehicles = myVehicles.filter((vehicle) => {
+        const vehicleOwnerId = getEntityId(vehicle?.owner);
+        return Boolean(myUserId && vehicleOwnerId === myUserId);
+      });
+
+      const sellerQuestionLists = await Promise.all(
+        ownedVehicles.map((vehicle) =>
+          questionService.getVehicleQuestions(vehicle._id).catch(() => [])
+        )
+      );
+
+      // Mensajes no respondidos para el vendedor.
+      const pendingForSellerCount = sellerQuestionLists
+        .flat()
+        .filter((question) => !question?.answer).length;
+
+      setNotificationsCount(pendingForBuyerCount + pendingForSellerCount);
+    } catch (error) {
+      setNotificationsCount(0);
+    }
+  }, [isAuthenticated, user]);
+
+  useEffect(() => {
+    loadNotifications();
+
+    if (!isAuthenticated()) return undefined;
+
+    const intervalId = setInterval(loadNotifications, 15000);
+    return () => clearInterval(intervalId);
+  }, [isAuthenticated, loadNotifications, location.pathname]);
 
   const handleLogout = () => {
     logout();
@@ -26,13 +91,17 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2 group">
-            <div className="w-10 h-10 bg-gradient-to-br from-warning-400 to-secondary-500 rounded-lg flex items-center justify-center transform group-hover:rotate-12 transition-transform duration-300">
-              <Settings className="w-6 h-6 text-white animate-spin-slow" />
-            </div>
-            <span className="text-2xl font-display font-black text-white tracking-tight">
-              AUTO<span className="text-warning-400">TICO</span>
-            </span>
+          <Link to="/" className="flex items-center group">
+            <img
+              src="/logo_movile.png"
+              alt="Autico"
+              className="h-11 w-auto md:hidden"
+            />
+            <img
+              src="/logo_web.png"
+              alt="Autico"
+              className="hidden md:block h-16 lg:h-20 w-auto md:-translate-y-1 lg:-translate-y-2"
+            />
           </Link>
 
           {/* Desktop Navigation */}
@@ -53,6 +122,19 @@ const Navbar = () => {
 
             {isAuthenticated() ? (
               <>
+                <Link
+                  to="/dashboard/questions"
+                  className="relative p-2 text-gray-300 hover:text-white hover:bg-dark-800 rounded-lg transition-all"
+                  title="Notificaciones de preguntas"
+                >
+                  <Bell className="w-5 h-5" />
+                  {notificationsCount > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-secondary-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                      {notificationsCount > 99 ? '99+' : notificationsCount}
+                    </span>
+                  )}
+                </Link>
+
                 <Link to="/dashboard/vehicles/new">
                   <Button variant="warning" size="sm" className="ml-2">
                     <Plus className="w-4 h-4 mr-1" />
@@ -147,6 +229,22 @@ const Navbar = () => {
 
               {isAuthenticated() ? (
                 <>
+                  <Link
+                    to="/dashboard/questions"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center justify-between px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-800 rounded-lg transition-all"
+                  >
+                    <span className="flex items-center space-x-2">
+                      <Bell className="w-5 h-5" />
+                      <span>Notificaciones</span>
+                    </span>
+                    {notificationsCount > 0 && (
+                      <span className="min-w-[22px] h-[22px] px-1.5 bg-secondary-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                        {notificationsCount > 99 ? '99+' : notificationsCount}
+                      </span>
+                    )}
+                  </Link>
+
                   <Link
                     to="/dashboard/vehicles/new"
                     onClick={() => setIsMenuOpen(false)}
