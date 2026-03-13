@@ -16,9 +16,13 @@ export const questionService = {
   // Obtener preguntas de un vehículo
   getVehicleQuestions: async (vehicleId) => {
     try {
-      // Las preguntas vienen en el detalle del vehículo
-      const response = await axios.get(`/vehicles/${vehicleId}`);
-      return response.data.data.questions || [];
+      const response = await axios.get(`/vehicles/${vehicleId}/questions`);
+
+      if (Array.isArray(response.data?.data)) {
+        return response.data.data;
+      }
+
+      return response.data?.data?.questions || [];
     } catch (error) {
       throw error.response?.data || { message: 'Error al obtener preguntas' };
     }
