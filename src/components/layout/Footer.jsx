@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Settings, Facebook, Twitter, Instagram, Mail, Phone, MapPin } from 'lucide-react';
+import { Linkedin, Mail, Phone, MapPin } from 'lucide-react';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -29,29 +29,25 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand */}
           <div>
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-warning-400 to-secondary-500 rounded-lg flex items-center justify-center">
-                <Settings className="w-6 h-6 text-white" />
-              </div>
-              <span className="text-2xl font-display font-black text-white">
-                AUTO<span className="text-warning-400">TICO</span>
-              </span>
+            <div className="mb-4">
+              <img
+                src="/logo_movile.png"
+                alt="Autico"
+                className="h-14 w-auto md:hidden"
+              />
+              <img
+                src="/logo_web.png"
+                alt="Autico"
+                className="hidden md:block h-16 w-auto"
+              />
             </div>
             <p className="text-sm text-gray-400 mb-4">
               La plataforma profesional para comprar y vender vehículos de forma segura y confiable.
             </p>
             <div className="flex space-x-3">
-              <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" 
+              <a href="https://www.linkedin.com/in/robert-quesada-b7a375215/" target="_blank" rel="noopener noreferrer" 
                 className="w-9 h-9 bg-dark-800 hover:bg-primary-500 rounded-lg flex items-center justify-center transition-colors">
-                <Facebook className="w-4 h-4" />
-              </a>
-              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer"
-                className="w-9 h-9 bg-dark-800 hover:bg-primary-500 rounded-lg flex items-center justify-center transition-colors">
-                <Twitter className="w-4 h-4" />
-              </a>
-              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer"
-                className="w-9 h-9 bg-dark-800 hover:bg-primary-500 rounded-lg flex items-center justify-center transition-colors">
-                <Instagram className="w-4 h-4" />
+                <Linkedin className="w-4 h-4" />
               </a>
             </div>
           </div>
@@ -90,15 +86,15 @@ const Footer = () => {
             <ul className="space-y-3">
               <li className="flex items-start space-x-2 text-sm">
                 <Mail className="w-4 h-4 mt-0.5 text-warning-400" />
-                <span>contacto@autico.com</span>
+                <span>rquesadaqq@outlook.com</span>
               </li>
               <li className="flex items-start space-x-2 text-sm">
                 <Phone className="w-4 h-4 mt-0.5 text-warning-400" />
-                <span>+52 (55) 1234-5678</span>
+                <span>+506 6043 7458</span>
               </li>
               <li className="flex items-start space-x-2 text-sm">
                 <MapPin className="w-4 h-4 mt-0.5 text-warning-400" />
-                <span>Ciudad de México, México</span>
+                <span>Quesada, Alajuela, Costa Rica</span>
               </li>
             </ul>
           </div>
