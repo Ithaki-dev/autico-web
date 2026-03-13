@@ -130,9 +130,9 @@ const MyVehicles = () => {
                       <div className="flex flex-wrap items-center gap-3 mb-3">
                         <Badge variant="default">{vehicle.year}</Badge>
                         <span className="text-2xl font-black text-secondary-500">
-                          {new Intl.NumberFormat('es-MX', {
+                          {new Intl.NumberFormat('es-CR', {
                             style: 'currency',
-                            currency: 'MXN',
+                            currency: 'CRC',
                             minimumFractionDigits: 0,
                           }).format(vehicle.price)}
                         </span>
