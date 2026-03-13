@@ -1,8 +1,8 @@
-// Formatear precio en pesos mexicanos
+// Formatear precio en colones costarricenses
 export const formatPrice = (price) => {
-  return new Intl.NumberFormat('es-MX', {
+  return new Intl.NumberFormat('es-CR', {
     style: 'currency',
-    currency: 'MXN',
+    currency: 'CRC',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(price);
