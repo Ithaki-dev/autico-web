@@ -220,7 +220,7 @@ const VehicleDetail = () => {
             {/* Vehicle Info */}
             <div className="bg-white rounded-xl shadow-metal border border-dark-200 p-6">
               {/* Header */}
-              <div className="flex items-start justify-between mb-4">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-4 gap-3">
                 <div>
                   <h1 className="text-3xl md:text-4xl font-display font-black text-dark-900 mb-2">
                     {vehicle.brand} {vehicle.model}
@@ -235,8 +235,8 @@ const VehicleDetail = () => {
                     </Badge>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-4xl font-black text-secondary-500">
+                <div className="w-full sm:w-auto text-left sm:text-right">
+                  <p className="text-2xl sm:text-4xl font-black text-secondary-500 break-words">
                     {formatPrice(vehicle.price)}
                   </p>
                 </div>
