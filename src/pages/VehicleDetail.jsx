@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { 
-  ArrowLeft, Calendar, Gauge, Phone, Mail, User, 
-  MessageCircle, Send, CheckCircle, AlertCircle 
+  ArrowLeft, Calendar, Phone, Mail,
+  MessageCircle, Send, CheckCircle, AlertCircle, Copy, Link as LinkIcon
 } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { useVehicle } from '../hooks/useVehicles';
 import { useAuth } from '../context/AuthContext';
 import { questionService } from '../api/questionService';
@@ -28,9 +27,90 @@ const VehicleDetail = () => {
   const [isAnswering, setIsAnswering] = useState(false);
   const [submittingQuestion, setSubmittingQuestion] = useState(false);
   const [submittingAnswer, setSubmittingAnswer] = useState(false);
+  const [questions, setQuestions] = useState([]);
+  const [loadingQuestions, setLoadingQuestions] = useState(false);
+  const [copyingLink, setCopyingLink] = useState(false);
 
-  const isOwner = user && vehicle && (vehicle.owner._id === user.id || vehicle.owner === user.id);
+  const getEntityId = (entity) => {
+    if (!entity) return null;
+    if (typeof entity === 'string') return entity;
+    return entity._id || entity.id || null;
+  };
+
+  const getQuestionText = (question) => {
+    return question?.text || question?.question || question?.message || '';
+  };
+
+  const getQuestionAuthorName = (question) => {
+    if (question?.user?.username) return question.user.username;
+    return question?.username || 'Usuario';
+  };
+
+  const getAnswerData = (question) => {
+    if (!question?.answer) return null;
+
+    if (typeof question.answer === 'string') {
+      return {
+        text: question.answer,
+        createdAt: question.updatedAt || question.createdAt,
+      };
+    }
+
+    const answerText = question.answer.text || question.answer.message;
+    if (!answerText) return null;
+
+    return {
+      text: answerText,
+      createdAt: question.answer.createdAt || question.updatedAt || question.createdAt,
+    };
+  };
+
+  const currentUserId = getEntityId(user);
+  const ownerId = getEntityId(vehicle?.owner);
+  const isLoggedIn = isAuthenticated();
+  const isOwner = Boolean(currentUserId && ownerId && ownerId === currentUserId);
   const isAvailable = vehicle?.status === 'available';
+  const allQuestions = questions;
+
+  const visibleQuestions = allQuestions.filter((question) => {
+    if (!isLoggedIn) return false;
+    if (isOwner) return true;
+
+    const questionOwnerId = getEntityId(question?.user);
+    return Boolean(questionOwnerId && questionOwnerId === currentUserId);
+  });
+
+  const hasPendingQuestion = !isOwner && visibleQuestions.some((question) => !getAnswerData(question));
+  const shareUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/vehicles/${id}`
+    : `/vehicles/${id}`;
+
+  const handleCopyShareUrl = async () => {
+    if (!shareUrl) return;
+
+    setCopyingLink(true);
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = shareUrl;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'absolute';
+        textarea.style.left = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
+
+      toast.success('Enlace copiado al portapapeles');
+    } catch (error) {
+      toast.error('No se pudo copiar el enlace');
+    } finally {
+      setCopyingLink(false);
+    }
+  };
 
   const handleAskQuestion = async (e) => {
     e.preventDefault();
@@ -39,7 +119,12 @@ const VehicleDetail = () => {
       return;
     }
 
-    if (!isAuthenticated()) {
+    if (hasPendingQuestion) {
+      toast.error('Debes esperar la respuesta del vendedor antes de enviar otra pregunta');
+      return;
+    }
+
+    if (!isLoggedIn) {
       toast.error('Debes iniciar sesión para hacer preguntas');
       navigate('/login');
       return;
@@ -50,7 +135,7 @@ const VehicleDetail = () => {
       await questionService.createQuestion(id, questionText);
       toast.success('Pregunta enviada correctamente');
       setQuestionText('');
-      reload(); // Recargar para mostrar la nueva pregunta
+      await Promise.all([reload(), loadQuestions()]);
     } catch (error) {
       toast.error(error.message || 'Error al enviar la pregunta');
     } finally {
@@ -72,13 +157,31 @@ const VehicleDetail = () => {
       setAnswerText('');
       setSelectedQuestion(null);
       setIsAnswering(false);
-      reload();
+      await Promise.all([reload(), loadQuestions()]);
     } catch (error) {
       toast.error(error.message || 'Error al enviar la respuesta');
     } finally {
       setSubmittingAnswer(false);
     }
   };
+
+  const loadQuestions = async () => {
+    if (!id) return;
+
+    setLoadingQuestions(true);
+    try {
+      const questionsData = await questionService.getVehicleQuestions(id);
+      setQuestions(Array.isArray(questionsData) ? questionsData : []);
+    } catch (error) {
+      setQuestions([]);
+    } finally {
+      setLoadingQuestions(false);
+    }
+  };
+
+  useEffect(() => {
+    loadQuestions();
+  }, [id]);
 
   if (loading) {
     return <LoadingSpinner fullScreen text="Cargando vehículo..." />;
@@ -190,6 +293,7 @@ const VehicleDetail = () => {
                       onChange={(e) => setQuestionText(e.target.value)}
                       rows={3}
                       className="bg-white"
+                      disabled={hasPendingQuestion || submittingQuestion}
                     />
                     <div className="mt-3 flex justify-end">
                       <Button
@@ -197,16 +301,21 @@ const VehicleDetail = () => {
                         variant="primary"
                         size="sm"
                         loading={submittingQuestion}
-                        disabled={!isAuthenticated() || submittingQuestion}
+                        disabled={!isLoggedIn || submittingQuestion || hasPendingQuestion}
                       >
                         <Send className="w-4 h-4 mr-2" />
                         Enviar Pregunta
                       </Button>
                     </div>
                   </form>
-                  {!isAuthenticated() && (
+                  {!isLoggedIn && (
                     <p className="text-sm text-dark-600 mt-2">
                       Debes <Link to="/login" className="text-primary-600 font-semibold hover:underline">iniciar sesión</Link> para hacer preguntas
+                    </p>
+                  )}
+                  {isLoggedIn && hasPendingQuestion && (
+                    <p className="text-sm text-warning-700 mt-2">
+                      Ya tienes una pregunta pendiente en este vehículo. Podrás enviar otra cuando el vendedor responda.
                     </p>
                   )}
                 </div>
@@ -214,19 +323,30 @@ const VehicleDetail = () => {
 
               {/* Questions List */}
               <div className="space-y-4">
-                {vehicle.questions && vehicle.questions.length > 0 ? (
-                  vehicle.questions.map((question) => (
+                {loadingQuestions ? (
+                  <p className="text-center text-dark-500 py-8">
+                    Cargando preguntas...
+                  </p>
+                ) : !isLoggedIn ? (
+                  <p className="text-center text-dark-500 py-8">
+                    Inicia sesión para ver preguntas y respuestas de este vehículo
+                  </p>
+                ) : visibleQuestions.length > 0 ? (
+                  visibleQuestions.map((question) => {
+                    const answerData = getAnswerData(question);
+
+                    return (
                     <div key={question._id} className="border border-dark-200 rounded-lg p-4">
                       {/* Question */}
                       <div className="flex items-start space-x-3 mb-3">
                         <div className="w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center flex-shrink-0">
                           <span className="text-xs text-white font-bold">
-                            {getInitials(question.user?.username || 'User')}
+                            {getInitials(getQuestionAuthorName(question))}
                           </span>
                         </div>
                         <div className="flex-1">
-                          <p className="font-semibold text-dark-900">{question.user?.username || 'Usuario'}</p>
-                          <p className="text-dark-700 mt-1">{question.text}</p>
+                          <p className="font-semibold text-dark-900">{getQuestionAuthorName(question)}</p>
+                          <p className="text-dark-700 mt-1">{getQuestionText(question)}</p>
                           <p className="text-xs text-dark-500 mt-1">
                             {formatRelativeDate(question.createdAt)}
                           </p>
@@ -234,15 +354,15 @@ const VehicleDetail = () => {
                       </div>
 
                       {/* Answer */}
-                      {question.answer ? (
+                      {answerData ? (
                         <div className="ml-11 pl-4 border-l-2 border-secondary-300 bg-secondary-50 rounded-r-lg p-3">
                           <div className="flex items-start space-x-2">
                             <CheckCircle className="w-4 h-4 text-secondary-500 flex-shrink-0 mt-1" />
                             <div className="flex-1">
                               <p className="font-semibold text-secondary-700 text-sm">Respuesta del vendedor</p>
-                              <p className="text-dark-700 mt-1">{question.answer.text}</p>
+                              <p className="text-dark-700 mt-1">{answerData.text}</p>
                               <p className="text-xs text-dark-500 mt-1">
-                                {formatRelativeDate(question.answer.createdAt)}
+                                {formatRelativeDate(answerData.createdAt)}
                               </p>
                             </div>
                           </div>
@@ -264,10 +384,13 @@ const VehicleDetail = () => {
                         )
                       )}
                     </div>
-                  ))
+                    );
+                  })
                 ) : (
                   <p className="text-center text-dark-500 py-8">
-                    Aún no hay preguntas sobre este vehículo
+                    {isOwner
+                      ? 'Aún no hay preguntas sobre este vehículo'
+                      : 'Todavía no tienes preguntas en este vehículo'}
                   </p>
                 )}
               </div>
@@ -331,6 +454,46 @@ const VehicleDetail = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Share Link */}
+              <div className="bg-white rounded-xl shadow-metal border border-dark-200 p-6">
+                <h3 className="text-lg font-bold text-dark-900 mb-4 flex items-center">
+                  <LinkIcon className="w-5 h-5 mr-2 text-primary-500" />
+                  Compartir Vehículo
+                </h3>
+
+                <p className="text-sm text-dark-600 mb-3">
+                  Comparte este enlace público del vehículo.
+                </p>
+
+                <div className="bg-gray-50 border border-dark-200 rounded-lg px-3 py-2 mb-3">
+                  <p className="text-xs text-dark-700 break-all">{shareUrl}</p>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                    onClick={handleCopyShareUrl}
+                    loading={copyingLink}
+                    disabled={copyingLink}
+                  >
+                    <Copy className="w-4 h-4 mr-2" />
+                    Copiar enlace
+                  </Button>
+                  <a
+                    href={shareUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex"
+                  >
+                    <Button variant="ghost" size="sm">
+                      Abrir
+                    </Button>
+                  </a>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -351,7 +514,7 @@ const VehicleDetail = () => {
           <div className="space-y-4">
             <div className="bg-gray-50 p-4 rounded-lg">
               <p className="font-semibold text-dark-900 mb-2">Pregunta:</p>
-              <p className="text-dark-700">{selectedQuestion.text}</p>
+              <p className="text-dark-700">{getQuestionText(selectedQuestion)}</p>
             </div>
             
             <form onSubmit={handleAnswerQuestion}>
