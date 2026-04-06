@@ -1,6 +1,16 @@
 import axios from './axiosConfig';
 
 export const authService = {
+  // Validación de identidad por cédula
+  validateIdentity: async (cedula) => {
+    try {
+      const response = await axios.post('/identity/validate', { cedula });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Error al validar la cédula' };
+    }
+  },
+
   // Registro de nuevo usuario
   register: async (userData) => {
     try {
