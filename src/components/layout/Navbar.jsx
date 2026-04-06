@@ -89,18 +89,18 @@ const Navbar = () => {
   return (
     <nav className="sticky top-0 z-30 bg-dark-950 shadow-metal-lg border-b-2 border-warning-400">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center group">
             <img
               src="/logo_movile.png"
               alt="Autico"
-              className="h-11 w-auto md:hidden"
+              className="h-12 w-auto md:hidden"
             />
             <img
               src="/logo_web.png"
               alt="Autico"
-              className="hidden md:block h-16 lg:h-20 w-auto md:-translate-y-1 lg:-translate-y-2"
+              className="hidden md:block h-14 lg:h-16 w-auto object-contain"
             />
           </Link>
 
