@@ -6,10 +6,19 @@ import { z } from 'zod';
 import { UserPlus, Settings, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import { authService } from '../api/authService';
 import Input from '../components/common/Input';
 import Button from '../components/common/Button';
 
 const registerSchema = z.object({
+  cedula: z
+    .string()
+    .min(9, 'La cédula debe tener al menos 9 dígitos')
+    .max(12, 'La cédula no puede tener más de 12 dígitos')
+    .regex(/^\d+$/, 'La cédula solo debe contener números'),
+  firstName: z.string().optional(),
+  lastName1: z.string().optional(),
+  lastName2: z.string().optional(),
   username: z
     .string()
     .min(3, 'El usuario debe tener al menos 3 caracteres')
@@ -33,15 +42,37 @@ const registerSchema = z.object({
 const Register = () => {
   const navigate = useNavigate();
   const { register: registerUser, isAuthenticated } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isValidatingIdentity, setIsValidatingIdentity] = useState(false);
+  const [isRegisterLoading, setIsRegisterLoading] = useState(false);
+  const [identityError, setIdentityError] = useState('');
+  const [identitySuccess, setIdentitySuccess] = useState('');
+  const [identityValidated, setIdentityValidated] = useState(false);
+  const [validatedCedula, setValidatedCedula] = useState('');
 
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
+    setError,
+    clearErrors,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(registerSchema),
+    defaultValues: {
+      cedula: '',
+      firstName: '',
+      lastName1: '',
+      lastName2: '',
+      username: '',
+      email: '',
+      phone: '',
+      password: '',
+      confirmPassword: '',
+    },
   });
+
+  const cedulaValue = watch('cedula');
 
   useEffect(() => {
     if (isAuthenticated()) {
@@ -49,17 +80,92 @@ const Register = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  const onSubmit = async (data) => {
-    setIsLoading(true);
+  useEffect(() => {
+    if (!validatedCedula) {
+      return;
+    }
+
+    if (cedulaValue !== validatedCedula) {
+      setValue('firstName', '');
+      setValue('lastName1', '');
+      setValue('lastName2', '');
+      setIdentityValidated(false);
+      setValidatedCedula('');
+      setIdentitySuccess('');
+      setIdentityError('Debes volver a validar la cédula después de modificarla');
+    }
+  }, [cedulaValue, setValue, validatedCedula]);
+
+  const handleValidateIdentity = async () => {
+    const cedula = (cedulaValue || '').trim();
+
+    if (!cedula) {
+      setError('cedula', {
+        type: 'manual',
+        message: 'Ingresa una cédula para validarla',
+      });
+      return;
+    }
+
+    setIsValidatingIdentity(true);
+    setIdentityError('');
+    setIdentitySuccess('');
+
     try {
-      const { confirmPassword, ...registerData } = data;
-      await registerUser(registerData);
+      const response = await authService.validateIdentity(cedula);
+
+      if (response.valid && response.isAdult) {
+        setValue('firstName', response.firstName || '');
+        setValue('lastName1', response.lastName1 || '');
+        setValue('lastName2', response.lastName2 || '');
+        setIdentityValidated(true);
+        setValidatedCedula(cedula);
+        setIdentitySuccess(response.message || 'Identidad validada correctamente');
+        clearErrors('cedula');
+        return;
+      }
+
+      setValue('firstName', '');
+      setValue('lastName1', '');
+      setValue('lastName2', '');
+      setIdentityValidated(false);
+      setValidatedCedula('');
+      setIdentityError(response.message || 'No fue posible validar la cédula');
+    } catch (error) {
+      setValue('firstName', '');
+      setValue('lastName1', '');
+      setValue('lastName2', '');
+      setIdentityValidated(false);
+      setValidatedCedula('');
+      setIdentityError(error.message || 'No se pudo validar la cédula. Intenta de nuevo');
+    } finally {
+      setIsValidatingIdentity(false);
+    }
+  };
+
+  const onSubmit = async (data) => {
+    if (!identityValidated || data.cedula !== validatedCedula) {
+      setIdentityError('Debes validar una cédula vigente antes de registrarte');
+      return;
+    }
+
+    setIsRegisterLoading(true);
+    try {
+      const registerPayload = {
+        username: data.username,
+        email: data.email,
+        phone: data.phone,
+        password: data.password,
+        cedula: data.cedula,
+      };
+
+      await registerUser(registerPayload);
       // El registro fue exitoso, redirigir a login
       navigate('/login');
     } catch (error) {
       console.error('Register error:', error);
     } finally {
-      setIsLoading(false);
+      setIsRegisterLoading(false);
     }
   };
 
@@ -92,6 +198,57 @@ const Register = () => {
         {/* Form Card */}
         <div className="bg-white rounded-2xl shadow-metal-xl p-8">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            {/* Cedula */}
+            <div className="flex flex-col sm:flex-row sm:items-end gap-3">
+              <Input
+                label="Cédula"
+                placeholder="123456789"
+                error={errors.cedula?.message}
+                required
+                className="sm:flex-1"
+                {...register('cedula')}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full sm:w-auto"
+                loading={isValidatingIdentity}
+                disabled={isValidatingIdentity || isRegisterLoading}
+                onClick={handleValidateIdentity}
+              >
+                Validar cédula
+              </Button>
+            </div>
+
+            {identityError && (
+              <p className="text-sm font-medium text-red-600">{identityError}</p>
+            )}
+            {identitySuccess && (
+              <p className="text-sm font-medium text-emerald-600">{identitySuccess}</p>
+            )}
+
+            {/* Identity Names (read-only) */}
+            <Input
+              label="Nombre"
+              placeholder="Se completará al validar"
+              readOnly
+              {...register('firstName')}
+            />
+
+            <Input
+              label="Primer Apellido"
+              placeholder="Se completará al validar"
+              readOnly
+              {...register('lastName1')}
+            />
+
+            <Input
+              label="Segundo Apellido"
+              placeholder="Se completará al validar"
+              readOnly
+              {...register('lastName2')}
+            />
+
             {/* Username */}
             <Input
               label="Nombre de Usuario"
@@ -158,11 +315,11 @@ const Register = () => {
               variant="primary"
               className="w-full"
               size="lg"
-              loading={isLoading}
-              disabled={isLoading}
+              loading={isRegisterLoading}
+              disabled={!identityValidated || isRegisterLoading || isValidatingIdentity}
             >
               <UserPlus className="w-5 h-5 mr-2" />
-              Crear Cuenta
+              Registrarse
             </Button>
           </form>
 
