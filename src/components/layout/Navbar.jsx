@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useCallback, useEffect, useState } from 'react';
 import { Menu, X, Car, LogOut, User, Settings, Plus, Home, Bell } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '../common/Button';
 import { questionService } from '../../api/questionService';
@@ -18,6 +18,24 @@ const Navbar = () => {
     if (!entity) return null;
     if (typeof entity === 'string') return entity;
     return entity._id || entity.id || null;
+  };
+
+  const getDisplayName = (currentUser) => {
+    if (!currentUser) return 'Usuario';
+
+    const candidate =
+      currentUser.username ||
+      currentUser.name ||
+      currentUser.fullName ||
+      currentUser.displayName ||
+      currentUser.email ||
+      'Usuario';
+
+    if (String(candidate).includes('@')) {
+      return String(candidate).split('@')[0] || 'Usuario';
+    }
+
+    return candidate;
   };
 
   const loadNotifications = useCallback(async () => {
@@ -147,7 +165,7 @@ const Navbar = () => {
                     <div className="w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center">
                       <User className="w-4 h-4 text-white" />
                     </div>
-                    <span className="font-semibold">{user?.username}</span>
+                    <span className="font-semibold">{getDisplayName(user)}</span>
                   </button>
                   
                   {/* Dropdown */}
