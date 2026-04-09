@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Car, Plus, MessageCircle, TrendingUp, Eye } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import { vehicleService } from '../../api/vehicleService';
 import { questionService } from '../../api/questionService';
 import Button from '../../components/common/Button';
@@ -79,6 +79,24 @@ const Dashboard = () => {
     },
   ];
 
+  const getDisplayName = (currentUser) => {
+    if (!currentUser) return 'Usuario';
+
+    const candidate =
+      currentUser.username ||
+      currentUser.name ||
+      currentUser.fullName ||
+      currentUser.displayName ||
+      currentUser.email ||
+      'Usuario';
+
+    if (String(candidate).includes('@')) {
+      return String(candidate).split('@')[0] || 'Usuario';
+    }
+
+    return candidate;
+  };
+
   if (loading) {
     return <LoadingSpinner fullScreen text="Cargando dashboard..." />;
   }
@@ -89,7 +107,7 @@ const Dashboard = () => {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl md:text-4xl font-display font-black text-dark-900 mb-2">
-            Bienvenido, {user?.username}
+            Bienvenido, {getDisplayName(user)}
           </h1>
           <p className="text-lg text-dark-600">Gestiona tus vehículos y actividad</p>
         </div>
