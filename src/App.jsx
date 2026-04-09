@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider } from './context/AuthContext.jsx';
 import Layout from './components/layout/Layout';
 import ProtectedRoute from './components/common/ProtectedRoute';
 
@@ -10,6 +10,7 @@ import VehiclesList from './pages/VehiclesList';
 import VehicleDetail from './pages/VehicleDetail';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import GoogleAuthSuccess from './pages/GoogleAuthSuccess';
 
 // Dashboard Pages
 import Dashboard from './pages/dashboard/Dashboard';
@@ -45,6 +46,8 @@ function App() {
             {/* Auth Routes (no layout) */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/auth/google/callback" element={<GoogleAuthSuccess />} />
+            <Route path="/auth/google/success" element={<GoogleAuthSuccess />} />
 
             {/* Protected Dashboard Routes with Layout */}
             <Route element={<Layout />}>
