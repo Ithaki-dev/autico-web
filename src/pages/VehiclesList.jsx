@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Car, ChevronLeft, ChevronRight } from 'lucide-react';
 import VehicleCard from '../components/vehicles/VehicleCard';
