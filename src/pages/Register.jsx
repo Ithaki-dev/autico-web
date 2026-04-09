@@ -5,10 +5,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { UserPlus, Settings, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { authService } from '../api/authService';
 import Input from '../components/common/Input';
 import Button from '../components/common/Button';
+import GoogleAuthButton from '../components/common/GoogleAuthButton';
 
 const registerSchema = z.object({
   cedula: z
@@ -169,6 +170,10 @@ const Register = () => {
     }
   };
 
+  const handleGoogleLogin = () => {
+    authService.startGoogleLogin();
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-dark-950 via-dark-900 to-primary-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <motion.div
@@ -321,6 +326,12 @@ const Register = () => {
               <UserPlus className="w-5 h-5 mr-2" />
               Registrarse
             </Button>
+
+            <GoogleAuthButton
+              onClick={handleGoogleLogin}
+              disabled={isRegisterLoading || isValidatingIdentity}
+              text="Continuar con Google"
+            />
           </form>
 
           {/* Divider */}
