@@ -1,8 +1,7 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { authService } from '../api/authService';
 import toast from 'react-hot-toast';
-
-const AuthContext = createContext(null);
+import { AuthContext } from './authContext';
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -33,15 +32,25 @@ export const AuthProvider = ({ children }) => {
   const login = async (credentials) => {
     try {
       const response = await authService.login(credentials);
-      if (response.success && response.data.user) {
-        setUser(response.data.user);
-        toast.success(`¡Bienvenido, ${response.data.user.username}!`);
+      const authUser = response?.data?.user || response?.data?.data?.user;
+
+      if (response.success && authUser) {
+        setUser(authService.getCurrentUser() || authUser);
+        toast.success(`¡Bienvenido, ${authUser.username}!`);
       }
       return response;
     } catch (error) {
       toast.error(error.message || 'Error al iniciar sesión');
       throw error;
     }
+  };
+
+  // Login con token y usuario (flujo OAuth y restauración)
+  const loginWithToken = (token, userData, successMessage = 'Sesión iniciada correctamente') => {
+    authService.saveSession(token, userData);
+    setUser(authService.getCurrentUser() || userData);
+    authService.clearGoogleTempToken();
+    toast.success(successMessage);
   };
 
   // Logout
@@ -61,18 +70,10 @@ export const AuthProvider = ({ children }) => {
     loading,
     register,
     login,
+    loginWithToken,
     logout,
     isAuthenticated,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-};
-
-// Hook personalizado para usar el contexto
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth debe usarse dentro de AuthProvider');
-  }
-  return context;
 };
