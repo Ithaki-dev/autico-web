@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, Calendar, Phone, Mail,
   MessageCircle, Send, CheckCircle, AlertCircle, Copy, Link as LinkIcon
 } from 'lucide-react';
 import { useVehicle } from '../hooks/useVehicles';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { questionService } from '../api/questionService';
 import ImageGallery from '../components/vehicles/ImageGallery';
 import LoadingSpinner from '../components/common/LoadingSpinner';
@@ -165,7 +165,7 @@ const VehicleDetail = () => {
     }
   };
 
-  const loadQuestions = async () => {
+  const loadQuestions = useCallback(async () => {
     if (!id) return;
 
     setLoadingQuestions(true);
@@ -177,11 +177,11 @@ const VehicleDetail = () => {
     } finally {
       setLoadingQuestions(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
     loadQuestions();
-  }, [id]);
+  }, [loadQuestions]);
 
   if (loading) {
     return <LoadingSpinner fullScreen text="Cargando vehículo..." />;
