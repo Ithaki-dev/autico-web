@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { vehicleService } from '../api/vehicleService';
 import toast from 'react-hot-toast';
 
@@ -15,7 +15,7 @@ export const useVehicles = (initialFilters = {}) => {
   const [filters, setFilters] = useState(initialFilters);
 
   // Cargar vehículos
-  const loadVehicles = async (newFilters = filters) => {
+  const loadVehicles = useCallback(async (newFilters = filters) => {
     setLoading(true);
     setError(null);
     try {
@@ -32,7 +32,7 @@ export const useVehicles = (initialFilters = {}) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
   // Aplicar filtros
   const applyFilters = (newFilters) => {
@@ -57,7 +57,7 @@ export const useVehicles = (initialFilters = {}) => {
   // Cargar en el montaje
   useEffect(() => {
     loadVehicles();
-  }, []);
+  }, [loadVehicles]);
 
   return {
     vehicles,
@@ -78,7 +78,7 @@ export const useVehicle = (id) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const loadVehicle = async () => {
+  const loadVehicle = useCallback(async () => {
     if (!id) return;
     
     setLoading(true);
@@ -94,11 +94,11 @@ export const useVehicle = (id) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
     loadVehicle();
-  }, [id]);
+  }, [loadVehicle]);
 
   return {
     vehicle,
