@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Calendar, Gauge, Eye, MapPin } from 'lucide-react';
+import { Calendar, Eye } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { formatPrice } from '../../utils/formatters';
 import Badge from '../common/Badge';
