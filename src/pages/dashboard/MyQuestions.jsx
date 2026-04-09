@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { MessageCircle, ExternalLink, CheckCircle, Clock, Inbox, Send } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -15,10 +15,6 @@ const MyQuestions = () => {
   const [receivedQuestions, setReceivedQuestions] = useState([]);
   const [activeTab, setActiveTab] = useState('received');
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    loadMyQuestions();
-  }, []);
 
   const getQuestionText = (question) => {
     return question?.text || question?.question || question?.message || '';
@@ -51,7 +47,7 @@ const MyQuestions = () => {
     return getEntityId(question?.vehicle) || question?.vehicleId || null;
   };
 
-  const loadMyQuestions = async () => {
+  const loadMyQuestions = useCallback(async () => {
     setLoading(true);
     try {
       const [askedResponse, vehiclesResponse] = await Promise.all([
@@ -94,7 +90,11 @@ const MyQuestions = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadMyQuestions();
+  }, [loadMyQuestions]);
 
   if (loading) {
     return <LoadingSpinner fullScreen text="Cargando tus preguntas..." />;
