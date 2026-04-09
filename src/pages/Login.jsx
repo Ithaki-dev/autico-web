@@ -5,9 +5,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { LogIn, Settings, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
+import { authService } from '../api/authService';
 import Input from '../components/common/Input';
 import Button from '../components/common/Button';
+import GoogleAuthButton from '../components/common/GoogleAuthButton';
 
 const loginSchema = z.object({
   username: z.string().min(1, 'Usuario o email es requerido'),
@@ -46,6 +48,10 @@ const Login = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleGoogleLogin = () => {
+    authService.startGoogleLogin();
   };
 
   return (
@@ -118,6 +124,12 @@ const Login = () => {
               <LogIn className="w-5 h-5 mr-2" />
               Iniciar Sesión
             </Button>
+
+            <GoogleAuthButton
+              onClick={handleGoogleLogin}
+              disabled={isLoading}
+              text="Continuar con Google"
+            />
           </form>
 
           {/* Divider */}
