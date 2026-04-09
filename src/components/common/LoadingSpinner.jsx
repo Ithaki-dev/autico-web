@@ -1,4 +1,4 @@
-import { Loader2, Settings } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const LoadingSpinner = ({ size = 'md', text, fullScreen = false }) => {
