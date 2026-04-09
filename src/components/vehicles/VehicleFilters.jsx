@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Filter, X, Search } from 'lucide-react';
 import Button from '../common/Button';
-import Input from '../common/Input';
 
 const VehicleFilters = ({ filters, onApplyFilters, onClearFilters }) => {
   const currentYear = new Date().getFullYear();
