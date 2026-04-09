@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { Search, ArrowRight, Car, Shield, Clock, TrendingUp, Zap } from 'lucide-react';
+import { Search, ArrowRight, Shield, Clock, TrendingUp, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { vehicleService } from '../api/vehicleService';
 import VehicleCard from '../components/vehicles/VehicleCard';
