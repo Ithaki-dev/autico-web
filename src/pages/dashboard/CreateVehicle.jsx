@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { vehicleService } from '../../api/vehicleService';
 import VehicleForm from '../../components/vehicles/VehicleForm';
-import Button from '../../components/common/Button';
 import toast from 'react-hot-toast';
 
 const CreateVehicle = () => {
