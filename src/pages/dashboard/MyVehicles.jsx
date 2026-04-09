@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { Car, Plus, Edit, Trash2, CheckCircle, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { vehicleService } from '../../api/vehicleService';
-import VehicleCard from '../../components/vehicles/VehicleCard';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
 import Button from '../../components/common/Button';
