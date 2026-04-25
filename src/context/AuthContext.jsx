@@ -20,7 +20,7 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     try {
       const response = await authService.register(userData);
-      toast.success('¡Registro exitoso! Ahora puedes iniciar sesión');
+      toast.success('¡Registro exitoso! Revisa tu correo para verificar tu cuenta antes de iniciar sesión');
       return response;
     } catch (error) {
       toast.error(error.message || 'Error al registrar usuario');
