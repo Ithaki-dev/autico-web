@@ -4,9 +4,9 @@ export const isValidEmail = (email) => {
   return emailRegex.test(email);
 };
 
-// Validar teléfono (10 dígitos)
+// Validar teléfono (8 dígitos)
 export const isValidPhone = (phone) => {
-  const phoneRegex = /^\d{10}$/;
+  const phoneRegex = /^\d{8}$/;
   const cleaned = phone.replace(/\D/g, '');
   return phoneRegex.test(cleaned);
 };
