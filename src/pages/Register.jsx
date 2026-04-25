@@ -32,8 +32,8 @@ const registerSchema = z.object({
     .string()
     .optional()
     .refine(
-      (val) => !val || /^\d{10}$/.test(val.replace(/\D/g, '')),
-      'El teléfono debe tener 10 dígitos'
+      (val) => !val || /^\d{8}$/.test(val.replace(/\D/g, '')),
+      'El teléfono debe tener 8 dígitos'
     ),
 }).refine((data) => data.password === data.confirmPassword, {
   message: 'Las contraseñas no coinciden',
