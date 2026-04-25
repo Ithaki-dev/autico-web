@@ -11,6 +11,7 @@ import VehicleDetail from './pages/VehicleDetail';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import GoogleAuthSuccess from './pages/GoogleAuthSuccess';
+import VerifyEmail from './pages/VerifyEmail';
 
 // Dashboard Pages
 import Dashboard from './pages/dashboard/Dashboard';
@@ -46,6 +47,7 @@ function App() {
             {/* Auth Routes (no layout) */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/auth/google/callback" element={<GoogleAuthSuccess />} />
             <Route path="/auth/google/success" element={<GoogleAuthSuccess />} />
 
