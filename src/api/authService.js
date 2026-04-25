@@ -148,6 +148,15 @@ export const authService = {
     }
   },
 
+  verifyEmail: async (token) => {
+    try {
+      const response = await axios.post('/auth/verify-email', { token });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'No se pudo verificar el correo. Intenta de nuevo.' };
+    }
+  },
+
   login: async (credentials) => {
     try {
       const response = await axios.post('/auth/login', credentials);
