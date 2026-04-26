@@ -45,6 +45,24 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Verificar código 2FA
+  const verify2FA = async (payload) => {
+    try {
+      const response = await authService.verify2FA(payload);
+      const authUser = response?.user || response?.data?.user || authService.getCurrentUser();
+
+      if (response.success && authUser) {
+        setUser(authUser);
+        toast.success(`¡Bienvenido, ${authUser.username || 'Usuario'}!`);
+      }
+
+      return response;
+    } catch (error) {
+      toast.error(error.message || 'Código de verificación inválido');
+      throw error;
+    }
+  };
+
   // Login con token y usuario (flujo OAuth y restauración)
   const loginWithToken = (token, userData, successMessage = 'Sesión iniciada correctamente') => {
     authService.saveSession(token, userData);
@@ -70,6 +88,7 @@ export const AuthProvider = ({ children }) => {
     loading,
     register,
     login,
+    verify2FA,
     loginWithToken,
     logout,
     isAuthenticated,
