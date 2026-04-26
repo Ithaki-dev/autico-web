@@ -41,7 +41,32 @@ const Login = () => {
   const onSubmit = async (data) => {
     setIsLoading(true);
     try {
-      await login(data);
+      const response = await login(data);
+      const requires2FA =
+        response?.requires2FA ||
+        response?.data?.requires2FA ||
+        response?.data?.data?.requires2FA;
+      const tempToken =
+        response?.tempToken ||
+        response?.data?.tempToken ||
+        response?.data?.data?.tempToken;
+
+      if (requires2FA) {
+        if (!tempToken) {
+          throw new Error('No se recibió token temporal para completar 2FA.');
+        }
+
+        authService.set2FATempToken(tempToken);
+        navigate('/verify-2fa', {
+          replace: true,
+          state: {
+            from,
+            tempToken,
+          },
+        });
+        return;
+      }
+
       navigate(from, { replace: true });
     } catch (error) {
       console.error('Login error:', error);
