@@ -12,6 +12,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import GoogleAuthSuccess from './pages/GoogleAuthSuccess';
 import VerifyEmail from './pages/VerifyEmail';
+import Verify2FA from './pages/Verify2FA';
 
 // Dashboard Pages
 import Dashboard from './pages/dashboard/Dashboard';
@@ -48,6 +49,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
+            <Route path="/verify-2fa" element={<Verify2FA />} />
             <Route path="/auth/google/callback" element={<GoogleAuthSuccess />} />
             <Route path="/auth/google/success" element={<GoogleAuthSuccess />} />
 
