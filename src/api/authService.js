@@ -1,6 +1,7 @@
 import axios from './axiosConfig';
 
 const GOOGLE_TEMP_TOKEN_KEY = 'google_temp_token';
+const TWO_FA_TEMP_TOKEN_KEY = 'two_fa_temp_token';
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
   import.meta.env.VITE_API_URL ||
@@ -170,10 +171,33 @@ export const authService = {
     }
   },
 
+  verify2FA: async ({ code, tempToken }) => {
+    try {
+      const response = await axios.post('/auth/verify-2fa', {
+        code,
+        tempToken,
+      });
+
+      const authData = extractAuthData(response.data);
+      if (authData.success && authData.token) {
+        persistAuthSession(authData.token, authData.user);
+        sessionStorage.removeItem(TWO_FA_TEMP_TOKEN_KEY);
+      }
+
+      return {
+        ...response.data,
+        ...authData,
+      };
+    } catch (error) {
+      throw error.response?.data || { message: 'Código 2FA inválido o expirado' };
+    }
+  },
+
   logout: () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     sessionStorage.removeItem(GOOGLE_TEMP_TOKEN_KEY);
+    sessionStorage.removeItem(TWO_FA_TEMP_TOKEN_KEY);
   },
 
   saveSession: (token, user) => {
@@ -260,6 +284,18 @@ export const authService = {
 
   clearGoogleTempToken: () => {
     sessionStorage.removeItem(GOOGLE_TEMP_TOKEN_KEY);
+  },
+
+  set2FATempToken: (tempToken) => {
+    sessionStorage.setItem(TWO_FA_TEMP_TOKEN_KEY, tempToken);
+  },
+
+  get2FATempToken: () => {
+    return sessionStorage.getItem(TWO_FA_TEMP_TOKEN_KEY);
+  },
+
+  clear2FATempToken: () => {
+    sessionStorage.removeItem(TWO_FA_TEMP_TOKEN_KEY);
   },
 
   getCurrentUser: () => {
