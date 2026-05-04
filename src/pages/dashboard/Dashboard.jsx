@@ -1,78 +1,67 @@
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Car, Plus, MessageCircle, TrendingUp, Eye } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../hooks/useAuth';
-import { vehicleService } from '../../api/vehicleService';
-import { questionService } from '../../api/questionService';
+import { useVehicles } from '../../hooks/useVehicles';
+import { useQuestions } from '../../hooks/useQuestions';
 import Button from '../../components/common/Button';
 import VehicleCard from '../../components/vehicles/VehicleCard';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const [stats, setStats] = useState({
-    totalVehicles: 0,
-    availableVehicles: 0,
-    soldVehicles: 0,
-    totalQuestions: 0,
-  });
-  const [recentVehicles, setRecentVehicles] = useState([]);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadDashboardData();
-  }, []);
+  const { vehicles, loading: vehiclesLoading } = useVehicles(100, 0);
+  const { questions, loading: questionsLoading } = useQuestions(100, 0);
 
-  const loadDashboardData = async () => {
-    try {
-      const [vehiclesResponse, questionsResponse] = await Promise.all([
-        vehicleService.getMyVehicles(),
-        questionService.getMyQuestions().catch(() => ({ data: [] })),
-      ]);
+  const isLoading = vehiclesLoading || questionsLoading;
 
-      if (vehiclesResponse.success) {
-        const vehicles = vehiclesResponse.data;
-        setStats({
-          totalVehicles: vehicles.length,
-          availableVehicles: vehicles.filter((v) => v.status === 'available').length,
-          soldVehicles: vehicles.filter((v) => v.status === 'sold').length,
-          totalQuestions: questionsResponse.data?.length || 0,
-        });
-        setRecentVehicles(vehicles.slice(0, 3));
-      }
-    } catch (error) {
-      console.error('Error loading dashboard:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const computed = useMemo(() => {
+    const myUserId = user?.id || user?._id || null;
+    const myVehicles = (Array.isArray(vehicles) ? vehicles : []).filter(
+      (v) => (v.owner?.id || v.owner?._id) === myUserId
+    );
+    const myQuestions = (Array.isArray(questions) ? questions : []).filter(
+      (q) => q.user?.id === myUserId
+    );
+
+    return {
+      stats: {
+        totalVehicles: myVehicles.length,
+        availableVehicles: myVehicles.filter((v) => v.status === 'available').length,
+        soldVehicles: myVehicles.filter((v) => v.status === 'sold').length,
+        totalQuestions: myQuestions.length,
+      },
+      recentVehicles: myVehicles.slice(0, 3),
+    };
+  }, [vehicles, questions, user]);
 
   const statCards = [
     {
       title: 'Total Vehículos',
-      value: stats.totalVehicles,
+      value: computed.stats.totalVehicles,
       icon: Car,
       color: 'from-primary-500 to-primary-600',
       trend: 'total',
     },
     {
       title: 'Disponibles',
-      value: stats.availableVehicles,
+      value: computed.stats.availableVehicles,
       icon: TrendingUp,
       color: 'from-green-500 to-green-600',
       trend: 'up',
     },
     {
       title: 'Vendidos',
-      value: stats.soldVehicles,
+      value: computed.stats.soldVehicles,
       icon: Eye,
       color: 'from-secondary-500 to-secondary-600',
       trend: 'neutral',
     },
     {
       title: 'Preguntas',
-      value: stats.totalQuestions,
+      value: computed.stats.totalQuestions,
       icon: MessageCircle,
       color: 'from-warning-400 to-warning-500',
       trend: 'info',
@@ -97,7 +86,7 @@ const Dashboard = () => {
     return candidate;
   };
 
-  if (loading) {
+  if (isLoading) {
     return <LoadingSpinner fullScreen text="Cargando dashboard..." />;
   }
 
@@ -174,10 +163,10 @@ const Dashboard = () => {
             </Link>
           </div>
 
-          {recentVehicles.length > 0 ? (
+          {computed.recentVehicles.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {recentVehicles.map((vehicle) => (
-                <VehicleCard key={vehicle._id} vehicle={vehicle} />
+              {computed.recentVehicles.map((vehicle) => (
+                <VehicleCard key={vehicle.id || vehicle._id} vehicle={vehicle} />
               ))}
             </div>
           ) : (
