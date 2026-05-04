@@ -4,16 +4,18 @@ import { motion } from 'framer-motion';
 import { formatPrice } from '../../utils/formatters';
 import Badge from '../common/Badge';
 
+const PLACEHOLDER_SVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23f3f4f6' width='400' height='300'/%3E%3Ctext x='50%25' y='50%25' font-size='14' fill='%239ca3af' text-anchor='middle' dominant-baseline='middle' font-family='sans-serif'%3ESin Imagen%3C/text%3E%3C/svg%3E";
+
 const VehicleCard = ({ vehicle }) => {
-  const mainImage = vehicle.images?.[0] || 'https://via.placeholder.com/400x300?text=Sin+Imagen';
-  const isAvailable = vehicle.status === 'available';
+  const mainImage = vehicle.images?.[0] || PLACEHOLDER_SVG;
+  const isAvailable = true; // GraphQL assumes vehicles are available
 
   return (
     <motion.div
       whileHover={{ y: -8 }}
       className="group"
     >
-      <Link to={`/vehicles/${vehicle._id}`}>
+      <Link to={`/vehicles/${vehicle.id}`}>
         <div className="bg-white rounded-xl overflow-hidden shadow-metal metal-hover border border-dark-200">
           {/* Image */}
           <div className="relative h-48 overflow-hidden bg-dark-100">
@@ -22,7 +24,11 @@ const VehicleCard = ({ vehicle }) => {
               alt={`${vehicle.brand} ${vehicle.model}`}
               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
               onError={(e) => {
-                e.target.src = 'https://via.placeholder.com/400x300?text=Sin+Imagen';
+                // Establece placeholder SVG si la imagen falla
+                try {
+                  e.target.onerror = null;
+                } catch (err) {}
+                e.target.src = PLACEHOLDER_SVG;
               }}
             />
             <div className="img-overlay" />
