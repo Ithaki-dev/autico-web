@@ -4,8 +4,8 @@ import { Menu, X, Car, LogOut, User, Settings, Plus, Home, Bell } from 'lucide-r
 import { useAuth } from '../../hooks/useAuth';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '../common/Button';
-import { questionService } from '../../api/questionService';
-import { vehicleService } from '../../api/vehicleService';
+import { useQuestions } from '../../hooks/useQuestions';
+import { useVehicles } from '../../hooks/useVehicles';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -38,60 +38,37 @@ const Navbar = () => {
     return candidate;
   };
 
-  const loadNotifications = useCallback(async () => {
+  // Usar queries GraphQL para calcular notificaciones (no invocamos servicios REST)
+  const { questions } = useQuestions(100, 0);
+  const { vehicles: allVehicles } = useVehicles(100, 0);
+
+  useEffect(() => {
     if (!isAuthenticated()) {
       setNotificationsCount(0);
       return;
     }
 
-    try {
-      const [myQuestionsResponse, myVehiclesResponse] = await Promise.all([
-        questionService.getMyQuestions().catch(() => ({ data: [] })),
-        vehicleService.getMyVehicles().catch(() => ({ data: [] })),
-      ]);
+    const myUserId = getEntityId(user);
+    const myQuestions = Array.isArray(questions) ? questions : [];
 
-      const myQuestions = Array.isArray(myQuestionsResponse?.data)
-        ? myQuestionsResponse.data
-        : [];
-      const myVehicles = Array.isArray(myVehiclesResponse?.data)
-        ? myVehiclesResponse.data
-        : [];
+    // Mensajes no respondidos para el usuario que pregunta.
+    const pendingForBuyerCount = myQuestions.filter(
+      (q) => q?.user?.id === myUserId && !q?.answer
+    ).length;
 
-      // Mensajes no respondidos para el usuario que pregunta.
-      const pendingForBuyerCount = myQuestions.filter((question) => !question?.answer).length;
+    // Vehículos propios
+    const myVehicles = (Array.isArray(allVehicles) ? allVehicles : []).filter(
+      (v) => getEntityId(v?.owner) === myUserId
+    );
+    const myVehicleIds = myVehicles.map((v) => v.id || v._id).filter(Boolean);
 
-      const myUserId = getEntityId(user);
+    // Preguntas sobre mis vehículos sin respuesta
+    const pendingForSellerCount = myQuestions.filter(
+      (q) => myVehicleIds.includes(q.vehicle?.id) && !q.answer
+    ).length;
 
-      const ownedVehicles = myVehicles.filter((vehicle) => {
-        const vehicleOwnerId = getEntityId(vehicle?.owner);
-        return Boolean(myUserId && vehicleOwnerId === myUserId);
-      });
-
-      const sellerQuestionLists = await Promise.all(
-        ownedVehicles.map((vehicle) =>
-          questionService.getVehicleQuestions(vehicle._id).catch(() => [])
-        )
-      );
-
-      // Mensajes no respondidos para el vendedor.
-      const pendingForSellerCount = sellerQuestionLists
-        .flat()
-        .filter((question) => !question?.answer).length;
-
-      setNotificationsCount(pendingForBuyerCount + pendingForSellerCount);
-    } catch (error) {
-      setNotificationsCount(0);
-    }
-  }, [isAuthenticated, user]);
-
-  useEffect(() => {
-    loadNotifications();
-
-    if (!isAuthenticated()) return undefined;
-
-    const intervalId = setInterval(loadNotifications, 15000);
-    return () => clearInterval(intervalId);
-  }, [isAuthenticated, loadNotifications, location.pathname]);
+    setNotificationsCount(pendingForBuyerCount + pendingForSellerCount);
+  }, [isAuthenticated, user, questions, allVehicles, location.pathname]);
 
   const handleLogout = () => {
     logout();
