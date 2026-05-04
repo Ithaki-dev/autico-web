@@ -2,33 +2,15 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { Search, ArrowRight, Shield, Clock, TrendingUp, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { vehicleService } from '../api/vehicleService';
+import { useVehicles } from '../hooks/useVehicles';
 import VehicleCard from '../components/vehicles/VehicleCard';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import Button from '../components/common/Button';
 
 const Home = () => {
   const navigate = useNavigate();
-  const [latestVehicles, setLatestVehicles] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-
-  useEffect(() => {
-    loadLatestVehicles();
-  }, []);
-
-  const loadLatestVehicles = async () => {
-    try {
-      const response = await vehicleService.getVehicles({ limit: 6, status: 'available' });
-      if (response.success) {
-        setLatestVehicles(response.data);
-      }
-    } catch (error) {
-      console.error('Error loading vehicles:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { vehicles: latestVehicles, loading } = useVehicles(6, 0);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -237,7 +219,7 @@ const Home = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {latestVehicles.map((vehicle) => (
-                <VehicleCard key={vehicle._id} vehicle={vehicle} />
+                <VehicleCard key={vehicle.id || vehicle._id} vehicle={vehicle} />
               ))}
             </div>
           )}
