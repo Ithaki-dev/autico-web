@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { ChevronLeft, ChevronRight, X, ZoomIn } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+const PLACEHOLDER_SVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='600'%3E%3Crect fill='%23f3f4f6' width='800' height='600'/%3E%3Ctext x='50%25' y='50%25' font-size='18' fill='%239ca3af' text-anchor='middle' dominant-baseline='middle' font-family='sans-serif'%3EError al cargar%3C/text%3E%3C/svg%3E";
+
 const ImageGallery = ({ images = [] }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
@@ -36,7 +38,8 @@ const ImageGallery = ({ images = [] }) => {
             alt={`Imagen ${currentIndex + 1}`}
             className="w-full h-full object-cover"
             onError={(e) => {
-              e.target.src = 'https://via.placeholder.com/800x600?text=Error+al+cargar';
+              e.target.onerror = null;
+              e.target.src = PLACEHOLDER_SVG;
             }}
           />
 
@@ -93,7 +96,8 @@ const ImageGallery = ({ images = [] }) => {
                   alt={`Thumbnail ${index + 1}`}
                   className="w-full h-full object-cover"
                   onError={(e) => {
-                    e.target.src = 'https://via.placeholder.com/150?text=Error';
+                    e.target.onerror = null;
+                    e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Crect fill='%23f3f4f6' width='150' height='150'/%3E%3C/svg%3E";
                   }}
                 />
               </button>
