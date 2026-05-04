@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Car, Plus, Edit, Trash2, CheckCircle, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { vehicleService } from '../../api/vehicleService';
+import { useAuth } from '../../hooks/useAuth';
+import { useVehicles } from '../../hooks/useVehicles';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
 import Button from '../../components/common/Button';
@@ -10,35 +12,26 @@ import Modal from '../../components/common/Modal';
 import Badge from '../../components/common/Badge';
 import toast from 'react-hot-toast';
 
+const PLACEHOLDER_SVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23f3f4f6' width='400' height='300'/%3E%3Ctext x='50%25' y='50%25' font-size='14' fill='%239ca3af' text-anchor='middle' dominant-baseline='middle' font-family='sans-serif'%3ESin Imagen%3C/text%3E%3C/svg%3E";
+
 const MyVehicles = () => {
-  const [vehicles, setVehicles] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const { vehicles: allVehicles, loading, refetch } = useVehicles(100, 0);
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, vehicleId: null, vehicleName: '' });
   const [deleting, setDeleting] = useState(false);
 
-  useEffect(() => {
-    loadMyVehicles();
-  }, []);
-
-  const loadMyVehicles = async () => {
-    setLoading(true);
-    try {
-      const response = await vehicleService.getMyVehicles();
-      if (response.success) {
-        setVehicles(response.data);
-      }
-    } catch (error) {
-      toast.error('Error al cargar tus vehículos');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const vehicles = useMemo(() => {
+    const myUserId = user?.id || user?._id || null;
+    return (Array.isArray(allVehicles) ? allVehicles : []).filter(
+      (v) => (v.owner?.id || v.owner?._id) === myUserId
+    );
+  }, [allVehicles, user]);
 
   const handleMarkAsSold = async (id) => {
     try {
       await vehicleService.markAsSold(id);
       toast.success('Vehículo marcado como vendido');
-      loadMyVehicles();
+      refetch();
     } catch (error) {
       toast.error('Error al marcar como vendido');
     }
@@ -50,7 +43,7 @@ const MyVehicles = () => {
       await vehicleService.deleteVehicle(deleteModal.vehicleId);
       toast.success('Vehículo eliminado correctamente');
       setDeleteModal({ isOpen: false, vehicleId: null, vehicleName: '' });
-      loadMyVehicles();
+      refetch();
     } catch (error) {
       toast.error('Error al eliminar el vehículo');
     } finally {
@@ -95,7 +88,7 @@ const MyVehicles = () => {
           <div className="grid grid-cols-1 gap-6">
             {vehicles.map((vehicle) => (
               <motion.div
-                key={vehicle._id}
+                key={vehicle.id || vehicle._id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="bg-white rounded-xl shadow-metal border border-dark-200 overflow-hidden"
@@ -104,11 +97,12 @@ const MyVehicles = () => {
                   {/* Image */}
                   <div className="relative h-48 md:h-full rounded-lg overflow-hidden">
                     <img
-                      src={vehicle.images?.[0] || 'https://via.placeholder.com/400x300?text=Sin+Imagen'}
+                      src={vehicle.images?.[0] || PLACEHOLDER_SVG}
                       alt={`${vehicle.brand} ${vehicle.model}`}
                       className="w-full h-full object-cover"
                       onError={(e) => {
-                        e.target.src = 'https://via.placeholder.com/400x300?text=Sin+Imagen';
+                        e.target.onerror = null;
+                        e.target.src = PLACEHOLDER_SVG;
                       }}
                     />
                     <div className="absolute top-2 right-2">
@@ -121,7 +115,7 @@ const MyVehicles = () => {
                   {/* Info */}
                   <div className="md:col-span-2 flex flex-col justify-between">
                     <div>
-                      <Link to={`/vehicles/${vehicle._id}`}>
+                      <Link to={`/vehicles/${vehicle.id || vehicle._id}`}>
                         <h3 className="text-2xl font-display font-bold text-dark-900 hover:text-primary-600 transition-colors mb-2">
                           {vehicle.brand} {vehicle.model}
                         </h3>
@@ -143,7 +137,7 @@ const MyVehicles = () => {
 
                     {/* Actions */}
                     <div className="flex flex-wrap gap-2">
-                      <Link to={`/vehicles/${vehicle._id}`}>
+                      <Link to={`/vehicles/${vehicle.id || vehicle._id}`}>
                         <Button variant="outline" size="sm">
                           <Car className="w-4 h-4 mr-2" />
                           Ver Detalle
@@ -151,7 +145,7 @@ const MyVehicles = () => {
                       </Link>
                       {vehicle.status === 'available' && (
                         <>
-                          <Link to={`/dashboard/vehicles/${vehicle._id}/edit`}>
+                          <Link to={`/dashboard/vehicles/${vehicle.id || vehicle._id}/edit`}>
                             <Button variant="primary" size="sm">
                               <Edit className="w-4 h-4 mr-2" />
                               Editar
@@ -160,7 +154,7 @@ const MyVehicles = () => {
                           <Button
                             variant="secondary"
                             size="sm"
-                            onClick={() => handleMarkAsSold(vehicle._id)}
+                            onClick={() => handleMarkAsSold(vehicle.id || vehicle._id)}
                           >
                             <CheckCircle className="w-4 h-4 mr-2" />
                             Marcar Vendido
@@ -173,7 +167,7 @@ const MyVehicles = () => {
                         onClick={() =>
                           setDeleteModal({
                             isOpen: true,
-                            vehicleId: vehicle._id,
+                            vehicleId: vehicle.id || vehicle._id,
                             vehicleName: `${vehicle.brand} ${vehicle.model}`,
                           })
                         }
