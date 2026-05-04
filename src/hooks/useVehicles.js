@@ -1,109 +1,72 @@
-import { useState, useEffect, useCallback } from 'react';
-import { vehicleService } from '../api/vehicleService';
-import toast from 'react-hot-toast';
+import { useQuery } from '@apollo/client';
+import {
+  GET_VEHICLES,
+  GET_VEHICLE_BY_ID,
+  GET_VEHICLES_BY_BRAND,
+} from '../graphql/queries/vehicles';
 
-export const useVehicles = (initialFilters = {}) => {
-  const [vehicles, setVehicles] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [pagination, setPagination] = useState({
-    total: 0,
-    page: 1,
-    pages: 1,
-    limit: 10
+/**
+ * Hook para listar vehículos con paginación
+ */
+export const useVehicles = (limit = 10, offset = 0) => {
+  const { data, loading, error, refetch, fetchMore } = useQuery(GET_VEHICLES, {
+    variables: { limit, offset },
+    fetchPolicy: 'cache-and-network', // Muestra cache mientras busca actualizaciones
   });
-  const [filters, setFilters] = useState(initialFilters);
 
-  // Cargar vehículos
-  const loadVehicles = useCallback(async (newFilters = filters) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await vehicleService.getVehicles(newFilters);
-      if (response.success) {
-        setVehicles(response.data);
-        if (response.pagination) {
-          setPagination(response.pagination);
-        }
-      }
-    } catch (err) {
-      setError(err.message || 'Error al cargar vehículos');
-      toast.error(err.message || 'Error al cargar vehículos');
-    } finally {
-      setLoading(false);
-    }
-  }, [filters]);
+  const vehicles = data?.getVehicles || [];
 
-  // Aplicar filtros
-  const applyFilters = (newFilters) => {
-    const updatedFilters = { ...filters, ...newFilters, page: 1 };
-    setFilters(updatedFilters);
-    loadVehicles(updatedFilters);
+  const loadMore = (newLimit, newOffset) => {
+    return fetchMore({
+      variables: { limit: newLimit, offset: newOffset },
+    });
   };
-
-  // Limpiar filtros
-  const clearFilters = () => {
-    setFilters({});
-    loadVehicles({});
-  };
-
-  // Cambiar página
-  const changePage = (page) => {
-    const updatedFilters = { ...filters, page };
-    setFilters(updatedFilters);
-    loadVehicles(updatedFilters);
-  };
-
-  // Cargar en el montaje
-  useEffect(() => {
-    loadVehicles();
-  }, [loadVehicles]);
 
   return {
     vehicles,
     loading,
-    error,
-    pagination,
-    filters,
-    applyFilters,
-    clearFilters,
-    changePage,
-    reload: loadVehicles,
+    error: error?.message || null,
+    refetch,
+    loadMore,
   };
 };
 
-// Hook para un vehículo individual
-export const useVehicle = (id) => {
-  const [vehicle, setVehicle] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-
-  const loadVehicle = useCallback(async () => {
-    if (!id) return;
-    
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await vehicleService.getVehicleById(id);
-      if (response.success) {
-        setVehicle(response.data);
-      }
-    } catch (err) {
-      setError(err.message || 'Error al cargar el vehículo');
-      toast.error(err.message || 'Error al cargar el vehículo');
-    } finally {
-      setLoading(false);
-    }
-  }, [id]);
-
-  useEffect(() => {
-    loadVehicle();
-  }, [loadVehicle]);
+/**
+ * Hook para obtener vehículo por ID
+ */
+export const useVehicleById = (vehicleId) => {
+  const { data, loading, error, refetch } = useQuery(GET_VEHICLE_BY_ID, {
+    variables: { id: vehicleId },
+    skip: !vehicleId,
+    fetchPolicy: 'cache-first',
+  });
 
   return {
-    vehicle,
+    vehicle: data?.getVehicleById || null,
     loading,
-    error,
-    reload: loadVehicle,
+    error: error?.message || null,
+    refetch,
   };
 };
+
+/**
+ * Hook para obtener vehículos por marca
+ */
+export const useVehiclesByBrand = (brand) => {
+  const { data, loading, error } = useQuery(GET_VEHICLES_BY_BRAND, {
+    variables: { brand },
+    skip: !brand,
+    fetchPolicy: 'cache-and-network',
+  });
+
+  return {
+    vehicles: data?.getVehiclesByBrand || [],
+    loading,
+    error: error?.message || null,
+  };
+};
+
+export default useVehicles;
+
+// Compatibilidad: alias histórico `useVehicle`
+export const useVehicle = useVehicleById;
