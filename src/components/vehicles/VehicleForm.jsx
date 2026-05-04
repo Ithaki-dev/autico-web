@@ -8,6 +8,8 @@ import Textarea from '../common/Textarea';
 import Button from '../common/Button';
 import toast from 'react-hot-toast';
 
+const PLACEHOLDER_SVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200'%3E%3Crect fill='%23f3f4f6' width='300' height='200'/%3E%3Ctext x='50%25' y='50%25' font-size='12' fill='%239ca3af' text-anchor='middle' dominant-baseline='middle' font-family='sans-serif'%3EError al cargar%3C/text%3E%3C/svg%3E";
+
 const vehicleSchema = z.object({
   brand: z.string().min(1, 'La marca es requerida').max(50),
   model: z.string().min(1, 'El modelo es requerido').max(50),
@@ -157,7 +159,8 @@ const VehicleForm = ({ onSubmit, initialData, isLoading }) => {
                   alt={`Preview ${index + 1}`}
                   className="w-full h-32 object-cover rounded-lg border-2 border-dark-200"
                   onError={(e) => {
-                    e.target.src = 'https://via.placeholder.com/300x200?text=Error';
+                    e.target.onerror = null;
+                    e.target.src = PLACEHOLDER_SVG;
                   }}
                 />
                 <button
