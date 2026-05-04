@@ -8,15 +8,6 @@ export const formatPrice = (price) => {
   }).format(price);
 };
 
-// Formatear fecha
-export const formatDate = (date) => {
-  return new Intl.DateTimeFormat('es-MX', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  }).format(new Date(date));
-};
-
 // Formatear fecha relativa (hace 2 días, hace 1 mes, etc.)
 export const formatRelativeDate = (date) => {
   const now = new Date();
@@ -41,12 +32,6 @@ export const formatRelativeDate = (date) => {
   }
 
   return 'Ahora mismo';
-};
-
-// Capitalizar primera letra
-export const capitalize = (str) => {
-  if (!str) return '';
-  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 };
 
 // Truncar texto
