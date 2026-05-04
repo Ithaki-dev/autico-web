@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { ApolloProvider } from '@apollo/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './context/AuthContext.jsx';
+import apolloClient from './apollo/client';
 import Layout from './components/layout/Layout';
 import ProtectedRoute from './components/common/ProtectedRoute';
 
@@ -13,6 +15,9 @@ import Register from './pages/Register';
 import GoogleAuthSuccess from './pages/GoogleAuthSuccess';
 import VerifyEmail from './pages/VerifyEmail';
 import Verify2FA from './pages/Verify2FA';
+import QuestionsPage from './pages/questions/QuestionsPage';
+import QuestionDetailPage from './pages/questions/QuestionDetailPage';
+import VehicleQuestionsPage from './pages/questions/VehicleQuestionsPage';
 
 // Dashboard Pages
 import Dashboard from './pages/dashboard/Dashboard';
@@ -34,75 +39,80 @@ const queryClient = new QueryClient({
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <BrowserRouter>
-          <Routes>
-            {/* Public Routes with Layout */}
-            <Route element={<Layout />}>
-              <Route path="/" element={<Home />} />
-              <Route path="/vehicles" element={<VehiclesList />} />
-              <Route path="/vehicles/:id" element={<VehicleDetail />} />
-            </Route>
+    <ApolloProvider client={apolloClient}>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <BrowserRouter>
+            <Routes>
+              {/* Public Routes with Layout */}
+              <Route element={<Layout />}>
+                <Route path="/" element={<Home />} />
+                <Route path="/vehicles" element={<VehiclesList />} />
+                <Route path="/vehicles/:id" element={<VehicleDetail />} />
+                <Route path="/vehicles/:vehicleId/questions" element={<VehicleQuestionsPage />} />
+                <Route path="/questions" element={<QuestionsPage />} />
+                <Route path="/questions/:id" element={<QuestionDetailPage />} />
+              </Route>
 
-            {/* Auth Routes (no layout) */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/verify-email" element={<VerifyEmail />} />
-            <Route path="/verify-2fa" element={<Verify2FA />} />
-            <Route path="/auth/google/callback" element={<GoogleAuthSuccess />} />
-            <Route path="/auth/google/success" element={<GoogleAuthSuccess />} />
+              {/* Auth Routes (no layout) */}
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/verify-email" element={<VerifyEmail />} />
+              <Route path="/verify-2fa" element={<Verify2FA />} />
+              <Route path="/auth/google/callback" element={<GoogleAuthSuccess />} />
+              <Route path="/auth/google/success" element={<GoogleAuthSuccess />} />
 
-            {/* Protected Dashboard Routes with Layout */}
-            <Route element={<Layout />}>
-              <Route
-                path="/dashboard"
-                element={
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/vehicles"
-                element={
-                  <ProtectedRoute>
-                    <MyVehicles />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/vehicles/new"
-                element={
-                  <ProtectedRoute>
-                    <CreateVehicle />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/vehicles/:id/edit"
-                element={
-                  <ProtectedRoute>
-                    <EditVehicle />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/questions"
-                element={
-                  <ProtectedRoute>
-                    <MyQuestions />
-                  </ProtectedRoute>
-                }
-              />
-            </Route>
+              {/* Protected Dashboard Routes with Layout */}
+              <Route element={<Layout />}>
+                <Route
+                  path="/dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/vehicles"
+                  element={
+                    <ProtectedRoute>
+                      <MyVehicles />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/vehicles/new"
+                  element={
+                    <ProtectedRoute>
+                      <CreateVehicle />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/vehicles/:id/edit"
+                  element={
+                    <ProtectedRoute>
+                      <EditVehicle />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/questions"
+                  element={
+                    <ProtectedRoute>
+                      <MyQuestions />
+                    </ProtectedRoute>
+                  }
+                />
+              </Route>
 
-            {/* Catch all - redirect to home */}
+              {/* Catch all - redirect to home */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
       </AuthProvider>
     </QueryClientProvider>
+    </ApolloProvider>
   );
 }
 
